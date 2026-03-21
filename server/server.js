@@ -1,42 +1,108 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "https://crypto-pulse-pro.vercel.app",
+].filter(Boolean);
+
 const BINANCE_REST_BASE =
-  process.env.BINANCE_REST_BASE || "https://api.binance.com/api/v3";
+  process.env.BINANCE_REST_BASE || "https://data-api.binance.vision/api/v3";
+
+const binanceClient = axios.create({
+  baseURL: BINANCE_REST_BASE,
+  timeout: 10000,
+  headers: {
+    Accept: "application/json",
+  },
+});
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://crypto-pulse-pro.vercel.app"],
+    origin(origin, callback) {
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("CORS not allowed"));
+    },
   }),
 );
 
 app.use(express.json());
 
+const forwardBinanceError = (res, label, error) => {
+  const upstreamStatus = error.response?.status || 502;
+  const upstreamData = error.response?.data || null;
+  const message = error.message || "Unknown upstream error";
+
+  console.error(`${label} ERROR:`, {
+    upstreamStatus,
+    upstreamData,
+    message,
+  });
+
+  return res.status(upstreamStatus).json({
+    message: `Failed to load ${label.toLowerCase()}`,
+    upstreamStatus,
+    upstreamError: upstreamData,
+    error: message,
+  });
+};
+
 const fetchBinance = async (path, params = {}) => {
-  const response = await axios.get(`${BINANCE_REST_BASE}${path}`, { params });
+  const response = await binanceClient.get(path, { params });
   return response.data;
 };
 
 app.get("/", (_req, res) => {
-  res.json({ message: "Crypto Pulse Pro server is running." });
+  res.json({
+    ok: true,
+    message: "Crypto Pulse Pro server is running.",
+    binanceBase: BINANCE_REST_BASE,
+  });
+});
+
+app.get("/api/health", async (_req, res) => {
+  try {
+    const ping = await fetchBinance("/ping");
+    return res.json({
+      ok: true,
+      binanceBase: BINANCE_REST_BASE,
+      ping,
+    });
+  } catch (error) {
+    return forwardBinanceError(res, "Health Check", error);
+  }
+});
+
+app.get("/api/binance/ping", async (_req, res) => {
+  try {
+    const data = await fetchBinance("/ping");
+    return res.json({
+      ok: true,
+      data,
+    });
+  } catch (error) {
+    return forwardBinanceError(res, "Binance Ping", error);
+  }
 });
 
 app.get("/api/binance/summary/:symbol", async (req, res) => {
   try {
     const data = await fetchBinance("/ticker/24hr", {
-      symbol: req.params.symbol.toUpperCase(),
+      symbol: String(req.params.symbol).toUpperCase(),
     });
 
-    res.json(data);
+    return res.json(data);
   } catch (error) {
-    console.error("SUMMARY ERROR:", error.response?.data || error.message);
-    res.status(500).json({
-      message: "Failed to load summary",
-      error: error.response?.data || error.message,
-    });
+    return forwardBinanceError(res, "Summary", error);
   }
 });
 
@@ -46,17 +112,13 @@ app.get("/api/binance/klines", async (req, res) => {
 
     const data = await fetchBinance("/klines", {
       symbol: String(symbol).toUpperCase(),
-      interval,
-      limit,
+      interval: String(interval),
+      limit: Number(limit),
     });
 
-    res.json(data);
+    return res.json(data);
   } catch (error) {
-    console.error("KLINES ERROR:", error.response?.data || error.message);
-    res.status(500).json({
-      message: "Failed to load klines",
-      error: error.response?.data || error.message,
-    });
+    return forwardBinanceError(res, "Klines", error);
   }
 });
 
@@ -66,16 +128,12 @@ app.get("/api/binance/depth", async (req, res) => {
 
     const data = await fetchBinance("/depth", {
       symbol: String(symbol).toUpperCase(),
-      limit,
+      limit: Number(limit),
     });
 
-    res.json(data);
+    return res.json(data);
   } catch (error) {
-    console.error("DEPTH ERROR:", error.response?.data || error.message);
-    res.status(500).json({
-      message: "Failed to load depth",
-      error: error.response?.data || error.message,
-    });
+    return forwardBinanceError(res, "Depth", error);
   }
 });
 
@@ -85,16 +143,12 @@ app.get("/api/binance/trades", async (req, res) => {
 
     const data = await fetchBinance("/trades", {
       symbol: String(symbol).toUpperCase(),
-      limit,
+      limit: Number(limit),
     });
 
-    res.json(data);
+    return res.json(data);
   } catch (error) {
-    console.error("TRADES ERROR:", error.response?.data || error.message);
-    res.status(500).json({
-      message: "Failed to load trades",
-      error: error.response?.data || error.message,
-    });
+    return forwardBinanceError(res, "Trades", error);
   }
 });
 
@@ -109,27 +163,40 @@ app.get("/api/binance/watchlist", async (req, res) => {
       .filter(Boolean);
 
     const results = await Promise.all(
-      symbols.map((symbol) =>
-        fetchBinance("/ticker/24hr", { symbol }).catch((error) => {
-          console.error(
-            `WATCHLIST ERROR (${symbol}):`,
-            error.response?.data || error.message,
-          );
-          return null;
-        }),
-      ),
+      symbols.map(async (symbol) => {
+        try {
+          return await fetchBinance("/ticker/24hr", { symbol });
+        } catch (error) {
+          console.error(`WATCHLIST ITEM ERROR (${symbol}):`, {
+            upstreamStatus: error.response?.status,
+            upstreamError: error.response?.data,
+            error: error.message,
+          });
+
+          return {
+            symbol,
+            error: true,
+          };
+        }
+      }),
     );
 
-    res.json(results.filter(Boolean));
+    return res.json(results.filter((item) => !item?.error));
   } catch (error) {
-    console.error("WATCHLIST ERROR:", error.response?.data || error.message);
-    res.status(500).json({
-      message: "Failed to load watchlist",
-      error: error.response?.data || error.message,
-    });
+    return forwardBinanceError(res, "Watchlist", error);
   }
+});
+
+app.use((err, _req, res, _next) => {
+  console.error("UNHANDLED SERVER ERROR:", err);
+
+  return res.status(500).json({
+    message: "Internal server error",
+    error: err.message,
+  });
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Using Binance base: ${BINANCE_REST_BASE}`);
 });
