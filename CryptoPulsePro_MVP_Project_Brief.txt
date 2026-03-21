@@ -1,0 +1,200 @@
+# CryptoPulsePro – MVP Project Brief
+
+## 1. Overview
+CryptoPulsePro is a real-time crypto trading dashboard designed for traders who want live market insight without trading directly on the platform.
+
+The MVP focuses on:
+- live market visibility
+- fast decision-making tools
+- clean, performant UI
+
+## 2. Core Problem
+Crypto traders:
+- constantly switch between apps (Binance, TradingView, etc.)
+- lack lightweight, fast dashboards
+- want real-time signals without noise
+
+## 3. MVP Goal
+Build a single-page dashboard that gives traders:
+- live price + market movement
+- quick chart visualization
+- order book + trade flow
+- multi-coin watchlist
+
+No trading. No complexity. Just decision tools.
+
+## 4. Target User
+- Active crypto traders
+- Scalpers / day traders
+- Beginners monitoring market movement
+
+## 5. Core Features (MVP)
+
+### 1. Market Summary (Hero Section)
+Displays:
+- Current price (BTC/USDT default)
+- 24h change (% + value)
+- 24h high
+- 24h low
+- 24h volume
+
+Endpoint:
+/ticker/24hr
+
+### 2. Interactive Chart (Lightweight)
+- Line chart (1m, 5m, 15m, 1h)
+- Shows price movement
+- Volume bars
+
+Endpoint:
+/klines
+
+### 3. Watchlist
+Default coins:
+- BTC
+- ETH
+- SOL
+- BNB
+- XRP
+
+Displays:
+- price
+- % change
+- click → switch chart
+
+Endpoint:
+/ticker/24hr (multiple)
+
+### 4. Order Book
+- Top 10 bids
+- Top 10 asks
+- price + quantity
+
+Endpoint:
+/depth
+
+### 5. Recent Trades
+- latest trades
+- price, qty, time
+- color-coded (buy/sell)
+
+Endpoint:
+/trades
+
+### 6. Auto Refresh (Pseudo Real-Time)
+- summary → every 5s
+- trades/depth → every 5s
+- chart → every 15s
+
+Later upgrade → WebSockets
+
+## 6. Tech Stack
+
+### Frontend
+- React + Vite
+- Tailwind CSS
+- Custom SVG charts (no heavy libs)
+
+### Backend
+- Node.js + Express
+- Axios (Binance proxy)
+- REST API only
+
+### Deployment
+- Frontend → Vercel
+- Backend → Heroku
+
+## 7. Architecture
+
+Frontend (Vercel)
+      ↓
+Backend Proxy (Heroku)
+      ↓
+Binance Public API
+
+Why proxy?
+- avoids CORS issues
+- allows scaling + monetization later
+- central control of API usage
+
+## 8. API Layer (Your Server)
+
+### Routes
+GET /api/binance/summary/:symbol
+GET /api/binance/klines
+GET /api/binance/depth
+GET /api/binance/trades
+GET /api/binance/watchlist
+
+## 9. UI Layout
+
+### Top
+- Logo + title
+- Live indicator
+
+### Middle
+- Watchlist strip
+- Main price + stats
+
+### Main Grid
+Left:
+- Chart
+- Trades
+- Order book
+
+Right:
+- Market watch
+- Quick stats
+
+## 10. UX Principles
+- Fast (no lag)
+- Minimal clicks
+- Real-time feel
+- Dark theme (trader standard)
+- Visual hierarchy (price > movement > depth)
+
+## 11. What NOT in MVP
+- user accounts
+- real trading
+- payments
+- advanced indicators
+- AI signals
+
+## 12. Monetization Path (Post-MVP)
+
+### Phase 1 (Free)
+- basic dashboard (current MVP)
+
+### Phase 2 (Paid)
+- alerts (price triggers)
+- multi-chart view
+- saved watchlists
+
+### Phase 3 (Advanced)
+- signal engine
+- smart insights
+- AI trade summaries
+
+## 13. Success Criteria
+MVP is successful if:
+- dashboard loads under 2s
+- data refresh works reliably
+- no API/CORS failures
+- UI feels “live”
+- user can switch coins instantly
+
+## 14. Next Iteration (After MVP)
+1. WebSocket integration
+2. Price alerts system
+3. Auth system
+4. Mobile optimization
+5. Performance tuning
+
+## 15. Key Insight (Important)
+You are NOT building:
+"another trading platform"
+
+You are building:
+a trader’s control panel
+
+That positioning is what makes it monetizable.
