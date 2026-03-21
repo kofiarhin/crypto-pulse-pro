@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-const REST_BASE = "http://localhost:5000/api/binance";
+const REST_BASE = import.meta.env.VITE_API_BASE_URL;
 const DEFAULT_SYMBOL = "BTCUSDT";
 const WATCHLIST_SYMBOLS = [
   "BTCUSDT",
