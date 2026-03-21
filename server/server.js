@@ -1,35 +1,23 @@
 const express = require("express");
 const cors = require("cors");
+const axios = require("axios");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const BINANCE_REST_BASE = "https://api.binance.com/api/v3";
+const BINANCE_REST_BASE =
+  process.env.BINANCE_REST_BASE || "https://api.binance.com/api/v3";
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://crypto-pulse-pro.vercel.app"],
+  }),
+);
+
 app.use(express.json());
 
-const buildUrl = (path, params = {}) => {
-  const url = new URL(`${BINANCE_REST_BASE}${path}`);
-
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, value);
-    }
-  });
-
-  return url.toString();
-};
-
 const fetchBinance = async (path, params = {}) => {
-  const url = buildUrl(path, params);
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Binance request failed: ${response.status} ${errorText}`);
-  }
-
-  return response.json();
+  const response = await axios.get(`${BINANCE_REST_BASE}${path}`, { params });
+  return response.data;
 };
 
 app.get("/", (_req, res) => {
@@ -44,7 +32,11 @@ app.get("/api/binance/summary/:symbol", async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("SUMMARY ERROR:", error.response?.data || error.message);
+    res.status(500).json({
+      message: "Failed to load summary",
+      error: error.response?.data || error.message,
+    });
   }
 });
 
@@ -60,7 +52,11 @@ app.get("/api/binance/klines", async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("KLINES ERROR:", error.response?.data || error.message);
+    res.status(500).json({
+      message: "Failed to load klines",
+      error: error.response?.data || error.message,
+    });
   }
 });
 
@@ -75,7 +71,11 @@ app.get("/api/binance/depth", async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("DEPTH ERROR:", error.response?.data || error.message);
+    res.status(500).json({
+      message: "Failed to load depth",
+      error: error.response?.data || error.message,
+    });
   }
 });
 
@@ -90,7 +90,11 @@ app.get("/api/binance/trades", async (req, res) => {
 
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("TRADES ERROR:", error.response?.data || error.message);
+    res.status(500).json({
+      message: "Failed to load trades",
+      error: error.response?.data || error.message,
+    });
   }
 });
 
@@ -106,16 +110,26 @@ app.get("/api/binance/watchlist", async (req, res) => {
 
     const results = await Promise.all(
       symbols.map((symbol) =>
-        fetchBinance("/ticker/24hr", { symbol }).catch(() => null),
+        fetchBinance("/ticker/24hr", { symbol }).catch((error) => {
+          console.error(
+            `WATCHLIST ERROR (${symbol}):`,
+            error.response?.data || error.message,
+          );
+          return null;
+        }),
       ),
     );
 
     res.json(results.filter(Boolean));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("WATCHLIST ERROR:", error.response?.data || error.message);
+    res.status(500).json({
+      message: "Failed to load watchlist",
+      error: error.response?.data || error.message,
+    });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
