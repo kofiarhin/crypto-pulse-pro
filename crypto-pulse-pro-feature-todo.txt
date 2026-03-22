@@ -1,0 +1,348 @@
+CRYPTO PULSE PRO — FEATURE IMPLEMENTATION TODO
+
+Goal:
+Add monetization and retention features on top of the current MVP without bloating the core dashboard.
+
+==================================================
+PHASE 1 — FOUNDATION FOR RETENTION + MONETIZATION
+==================================================
+
+1. Implement real authentication
+- Add backend auth routes (register, login, logout, refresh if needed)
+- Add JWT/session handling
+- Add protected user endpoints
+- Wire login/register UI to real backend
+- Add user model and persistence
+- Add auth state on frontend
+
+Why:
+- Required base for paid plans, saved data, alerts, and personalization
+
+2. Add saved user preferences
+- Save default symbol
+- Save preferred interval
+- Save theme/layout preferences
+- Save recent viewed coins/pairs
+
+Why:
+- Makes the app feel personal and increases repeat usage
+
+3. Add custom watchlists
+- Create watchlists per user
+- Add/remove symbols
+- Allow naming watchlists
+- Allow pinning favorite watchlist
+- Add sorting by price, 24h %, volume
+
+Free vs Paid:
+- Free: 1 watchlist
+- Pro: unlimited watchlists
+
+Why:
+- Strong retention feature and clean premium upsell
+
+4. Add saved dashboard/workspace state
+- Persist selected pair
+- Persist chart interval
+- Persist layout settings
+- Persist open panels/widgets
+
+Free vs Paid:
+- Free: basic persistence
+- Pro: multiple saved layouts/workspaces
+
+Why:
+- Users return because their setup is remembered
+
+====================================
+PHASE 2 — FIRST REVENUE FEATURES
+====================================
+
+5. Build price alerts system
+- Alert when price goes above target
+- Alert when price goes below target
+- Alert on % move threshold
+- Alert on 24h high/low breakout
+- Alert on volume spike
+- Add alert creation UI
+- Add active alerts page
+- Add alert history/log
+
+Free vs Paid:
+- Free: limited active alerts
+- Pro: higher alert limits
+
+Why:
+- Best first monetization feature
+- Pulls users back into the product repeatedly
+
+6. Add alert delivery channels
+- Browser push notifications
+- Email notifications
+- Telegram notifications
+- Discord webhook notifications
+
+Free vs Paid:
+- Free: browser only or very limited channels
+- Pro: multiple delivery channels
+
+Why:
+- Makes the product useful even when users are away from the dashboard
+
+7. Add usage limits by plan
+- Limit watchlists for free users
+- Limit alerts for free users
+- Limit delivery channels for free users
+- Add plan-aware middleware/backend checks
+- Show upgrade prompts in UI when limits are hit
+
+Why:
+- Required to convert free users into paying users cleanly
+
+8. Add billing/subscription system
+- Add plan model or subscription table
+- Integrate Stripe
+- Add checkout flow
+- Add billing portal
+- Add subscription status checks
+- Add plan badges and upgrade UI
+
+Plans suggestion:
+- Free
+- Pro
+- Pro+
+
+Why:
+- Required for actual monetization, not just feature gating
+
+====================================
+PHASE 3 — POWER USER FEATURES
+====================================
+
+9. Add multi-chart layout
+- 2-chart mode
+- 4-chart mode
+- Independent symbol selection per chart
+- Sync interval option
+- Save chart layouts
+
+Free vs Paid:
+- Free: single chart
+- Pro: multi-chart + saved layouts
+
+Why:
+- Easy premium feature with obvious trader value
+
+10. Add market movers dashboard
+- Top gainers
+- Top losers
+- Highest volume movers
+- Biggest volatility movers
+- Watchlist-relative movers
+
+Why:
+- Gives users a reason to open the app daily even without a specific pair in mind
+
+11. Add advanced watchlist filters
+- Filter by price change
+- Filter by volume
+- Filter by volatility
+- Sort by user-defined preference
+- Save filter presets
+
+Why:
+- Improves daily usefulness and supports more advanced users
+
+12. Add live mode with WebSockets
+- Live ticker updates
+- Live trades feed
+- Live order book updates
+- Faster refresh mode for premium users
+
+Free vs Paid:
+- Free: normal refresh
+- Pro: live mode/faster updates
+
+Why:
+- Higher perceived product quality and stronger premium positioning
+
+====================================
+PHASE 4 — HIGH RETENTION / HIGHER ARPU
+====================================
+
+13. Add signal engine
+- Breakout detection
+- Volume confirmation signals
+- Volatility spike signals
+- Support/resistance proximity alerts
+- Watchlist-specific signal feed
+
+Free vs Paid:
+- Premium-only or limited free sample signals
+
+Why:
+- Very strong monetization and retention if signal quality is good
+
+14. Add AI market recap / smart summaries
+- 1h recap
+- 4h recap
+- 24h recap
+- Watchlist-specific recap
+- Alert explanations in plain English
+- “Why is this moving?” summaries
+
+Free vs Paid:
+- Free: limited daily recap
+- Pro+: full AI recap and personalized summaries
+
+Why:
+- Strong daily habit feature, especially for intermediate users
+
+15. Add portfolio tracker
+- Manual holdings entry
+- Portfolio PnL
+- Daily/weekly performance snapshot
+- Alerts on owned assets
+- Watch portfolio vs market benchmarks
+
+Free vs Paid:
+- Free: basic manual portfolio
+- Pro+: deeper analytics, alerts, export
+
+Why:
+- Very sticky because users care about their own holdings most
+
+16. Add notes / trade journal lite
+- Add notes per coin
+- Log trade ideas
+- Tag setups (breakout, scalp, swing)
+- Timestamp journal entries
+- Filter/search notes
+
+Why:
+- Makes the product part of the user’s actual workflow, not just a dashboard
+
+====================================
+PHASE 5 — RE-ENGAGEMENT + STICKINESS
+====================================
+
+17. Add daily digest / recap email
+- Market movers summary
+- User watchlist summary
+- Triggered alerts summary
+- Daily/weekly digest options
+
+Why:
+- Strong reactivation channel for inactive users
+
+18. Add notification center
+- In-app feed for alerts and summaries
+- Read/unread state
+- Group by symbol/event type
+- Quick actions from notifications
+
+Why:
+- Centralizes activity and increases return sessions
+
+19. Add streak / engagement mechanics carefully
+- Daily check-in streak for opening app
+- Watchlist update streak
+- Daily recap viewed streak
+
+Note:
+- Keep this subtle; do not cheapen the product
+
+Why:
+- Can improve retention if implemented minimally and tastefully
+
+20. Add onboarding personalization
+- Ask favorite coins on signup
+- Ask trading style (scalp/swing/long-term)
+- Ask preferred alert type
+- Pre-build starter watchlist and dashboard
+
+Why:
+- Faster time-to-value and better activation
+
+====================================
+PRICING / FEATURE GATING IDEA
+====================================
+
+Free
+- Public dashboard
+- 1 watchlist
+- Limited alerts
+- Basic market movers
+- Basic saved preferences
+
+Pro
+- Unlimited watchlists
+- More active alerts
+- Multi-chart layouts
+- Saved workspaces
+- Push/email/Telegram alerts
+- Faster/live updates
+
+Pro+
+- Signal engine
+- AI summaries
+- Portfolio analytics
+- Advanced filters
+- Personalized market recap
+
+====================================
+RECOMMENDED IMPLEMENTATION ORDER
+====================================
+
+Sprint 1
+- Real auth
+- User model
+- Saved preferences
+- Custom watchlists
+
+Sprint 2
+- Price alerts
+- Active alerts page
+- Browser push/email delivery
+- Plan limits
+
+Sprint 3
+- Stripe billing
+- Upgrade flow
+- Subscription gating
+- Multi-chart layout
+
+Sprint 4
+- Market movers
+- Saved layouts
+- WebSocket live mode
+
+Sprint 5
+- Signal engine
+- AI recap
+- Portfolio tracker
+- Notes/journal lite
+
+====================================
+TOP 5 FEATURES TO BUILD FIRST
+====================================
+
+1. Price alerts
+2. Saved watchlists
+3. Real auth + persistence
+4. Multi-chart layout
+5. Market movers
+
+====================================
+FEATURES TO AVOID FOR NOW
+====================================
+
+Do not prioritize yet:
+- Social feed/community layer
+- Copy trading
+- On-platform trade execution
+- Overbuilt AI before alerts are working
+- Too many indicators too early
+
+Reason:
+Keep the product as a fast trader control panel, not a bloated exchange clone.
