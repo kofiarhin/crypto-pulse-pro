@@ -1,13 +1,21 @@
 require("dotenv").config();
 
-const express = require("express");
-const BINANCE_REST_BASE =
-  process.env.BINANCE_REST_BASE || "https://data-api.binance.vision/api/v3";
+const { getEnvConfig } = require("./config/env");
+const { connectDb } = require("./config/db");
+const { createApp } = require("./app");
 
-const app = require("./app");
-const PORT = process.env.PORT || 5000;
+const startServer = async () => {
+  const env = getEnvConfig();
+  await connectDb(env.mongodbUri);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Using Binance base: ${BINANCE_REST_BASE}`);
+  const app = createApp(env);
+
+  app.listen(env.port, () => {
+    console.log(`Server running on port ${env.port}`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error("Fatal startup error", error);
+  process.exit(1);
 });
