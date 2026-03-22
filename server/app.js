@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const axios = require("axios");
 const { buildAuthRoutes } = require("./routes/authRoutes");
 const { buildUserRoutes } = require("./routes/userRoutes");
+const { buildMarketRoutes } = require("./routes/marketRoutes");
 const { errorHandler } = require("./middleware/errorHandler");
 
 const createApp = (env) => {
@@ -188,6 +189,7 @@ const createApp = (env) => {
 
   app.use("/api/auth", buildAuthRoutes(env));
   app.use("/api/user", buildUserRoutes(env));
+  app.use("/api/markets", buildMarketRoutes());
 
   app.use(errorHandler);
 

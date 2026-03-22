@@ -1,7 +1,7 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Home from "./pages/Home/Home";
-import Dashboard from "./pages/Dashboard/Dashboard";
+import CoinDetails from "./pages/CoinDetails/CoinDetails";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
 import Login from "./pages/Login/Login";
@@ -14,12 +14,8 @@ const App = () => {
 
   if (!initialized) {
     return (
-      <main className="dashboard-page">
-        <div className="dashboard-shell">
-          <section className="feedback-card">
-            <p>Initializing session...</p>
-          </section>
-        </div>
+      <main className="min-h-screen bg-slate-950 px-4 py-6 text-white">
+        <p>Initializing session...</p>
       </main>
     );
   }
@@ -29,7 +25,8 @@ const App = () => {
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/coins/:symbol" element={<CoinDetails />} />
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
