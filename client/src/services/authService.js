@@ -1,20 +1,20 @@
-import { apiClient } from "../lib/apiClient";
+import { authApiClient } from "../lib/apiClient";
 
 export const authService = {
   register: async (payload) => {
-    const response = await apiClient.post("/auth/register", payload);
+    const response = await authApiClient.post("/register", payload);
     return response.data.data;
   },
   login: async (payload) => {
-    const response = await apiClient.post("/auth/login", payload);
+    const response = await authApiClient.post("/login", payload);
     return response.data.data;
   },
   refresh: async () => {
-    const response = await apiClient.post("/auth/refresh");
+    const response = await authApiClient.post("/refresh");
     return response.data.data;
   },
   me: async (accessToken) => {
-    const response = await apiClient.get("/auth/me", {
+    const response = await authApiClient.get("/me", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -22,7 +22,7 @@ export const authService = {
     return response.data.data;
   },
   logout: async () => {
-    const response = await apiClient.post("/auth/logout");
+    const response = await authApiClient.post("/logout");
     return response.data.data;
   },
 };
