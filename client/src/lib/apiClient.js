@@ -1,14 +1,17 @@
 import axios from "axios";
+import { API_AUTH_BASE, API_USER_BASE } from "./apiConfig";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const buildApiClient = (baseURL) =>
+  axios.create({
+    baseURL,
+    withCredentials: true,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-export const apiClient = axios.create({
-  baseURL: BASE_URL,
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+export const authApiClient = buildApiClient(API_AUTH_BASE);
+export const userApiClient = buildApiClient(API_USER_BASE);
 
 export const extractApiError = (error) => {
   if (error?.response?.data?.error?.message) {
