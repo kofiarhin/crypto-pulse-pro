@@ -1,8 +1,17 @@
+import { useState } from "react";
 import { useMarketsQuery } from "../../hooks/queries/useMarketsQuery";
+import { useSummaryQuery } from "../../hooks/queries/useSummaryQuery";
+import { useKlinesQuery } from "../../hooks/queries/useKlinesQuery";
 import { MarketTable } from "../../components/market/MarketTable";
+import { HomeMarketHero } from "../../components/home/HomeMarketHero";
 
 const Home = () => {
+  const [selectedSymbol] = useState("BTCUSDT");
+  const [selectedInterval, setSelectedInterval] = useState("1m");
+
   const marketsQuery = useMarketsQuery(50);
+  const summaryQuery = useSummaryQuery(selectedSymbol);
+  const klinesQuery = useKlinesQuery(selectedSymbol, selectedInterval);
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-6 text-white">
@@ -17,6 +26,16 @@ const Home = () => {
             Refresh
           </button>
         </header>
+
+        <HomeMarketHero
+          symbol={selectedSymbol}
+          interval={selectedInterval}
+          summary={summaryQuery.data}
+          candles={klinesQuery.data ?? []}
+          isLoadingSummary={summaryQuery.isLoading}
+          isLoadingChart={klinesQuery.isLoading}
+          onIntervalChange={setSelectedInterval}
+        />
 
         {marketsQuery.isLoading ? <p className="text-slate-300">Loading markets...</p> : null}
 
