@@ -42,7 +42,7 @@ export const MarketTable = ({ rows }) => {
               <td className="px-4 py-3">{coin.rank || "-"}</td>
               <td className="px-4 py-3">
                 <Link to={`/coins/${coin.binanceSymbol}`} className="flex items-center gap-3 font-medium text-white">
-                  {coin.image ? <img src={coin.image} alt={`${coin.name} logo`} className="h-5 w-5 rounded-full" /> : null}
+                  {coin.image ? <img src={coin.image} alt={`${coin.name} logo`} className="h-5 w-5 rounded-full" loading="lazy" decoding="async" /> : null}
                   {coin.name}
                 </Link>
               </td>

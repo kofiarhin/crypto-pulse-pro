@@ -41,10 +41,10 @@ npm run build --prefix client
 Browser → React (Vite, port 5173)
             → Axios (lib/apiClient.js, VITE_API_ORIGIN)
             → Express (port 5000)
-                → /api/auth     → authController
-                → /api/user     → userController
-                → /api/binance  → marketController → Binance REST API
-                → /api/markets  → marketController → CoinGecko + Binance
+                → /api/auth       → authController
+                → /api/user       → userController
+                → /api/markets    → marketController → CoinGecko + Binance exchangeInfo
+                → /api/binance/*  → inline handlers in app.js → Binance REST API
 ```
 
 ### Auth
@@ -52,9 +52,9 @@ Browser → React (Vite, port 5173)
 JWT dual-token scheme:
 - **Access token** (15m): stored in Redux `authSlice`, sent as `Authorization: Bearer` header
 - **Refresh token** (7d): stored as `cpp_refresh_token` HTTP-only cookie
-- On app load, `useInitializeAuth` calls `GET /api/auth/me` to restore session; if it fails with 401 it calls `POST /api/auth/refresh` automatically via the axios interceptor
+- On app load, `useInitializeAuth` proactively calls `POST /api/auth/refresh` first, then `GET /api/auth/me` with the new access token. If either fails, auth is cleared. This is not interceptor-based — the hook manages the full init sequence directly.
 
-The `requireAuth` middleware verifies the access token. Refresh happens client-side via the axios interceptor in `lib/apiClient.js`.
+The `requireAuth` middleware verifies the access token on protected routes. Routes are built via factory functions (`buildAuthRoutes(env)`, `buildUserRoutes(env)`) that close over the `env` config object so secrets are never read from `process.env` directly inside middleware.
 
 ### State Boundaries
 
@@ -63,9 +63,11 @@ The `requireAuth` middleware verifies the access token. Refresh happens client-s
 
 ### Market Data
 
-`/api/markets` aggregates CoinGecko (metadata/ranking) with Binance availability check.  
-`/api/binance/*` are thin proxies to the Binance REST API (`BINANCE_REST_BASE` env var).  
-`marketService.js` uses native `fetch` with `AbortController` signals (not Axios) — this is intentional for React Query's cancellation support.
+`/api/markets` (via `marketController.js`) aggregates CoinGecko (metadata/ranking) with a Binance `exchangeInfo` availability check. Only coins with a `{SYMBOL}USDT` pair on Binance are returned. The `exchangeInfo` response is in-memory cached for 60s.
+
+`/api/binance/*` routes (klines, depth, trades, summary, watchlist) are defined **inline in `app.js`** — not in a separate routes file — using a shared `binanceClient` axios instance.
+
+`client/src/services/marketService.js` uses native `fetch` with `AbortController` signals (not Axios) — this is intentional for React Query's cancellation support.
 
 ### Server Entry
 
@@ -75,13 +77,15 @@ The `requireAuth` middleware verifies the access token. Refresh happens client-s
 
 | Variable | Where | Purpose |
 |---|---|---|
-| `VITE_API_ORIGIN` | `client/.env` | Backend origin (no trailing slash, no `/api`) |
+| `VITE_API_ORIGIN` | `client/.env` | Backend origin (no trailing slash, no `/api`). Falls back to `http://localhost:5000` if unset — this fallback is dev-only. |
 | `PORT` | root `.env` | Express port (default 5000) |
+| `NODE_ENV` | root `.env` | Required; used by env validation |
 | `MONGODB_URI` | root `.env` | MongoDB connection string |
 | `JWT_ACCESS_SECRET` | root `.env` | Signing access tokens |
 | `JWT_REFRESH_SECRET` | root `.env` | Signing refresh tokens |
 | `CLIENT_URL` | root `.env` | Frontend origin for CORS |
-| `BINANCE_REST_BASE` | root `.env` | Binance API base URL |
+| `BINANCE_REST_BASE` | root `.env` | Binance API base URL (defaults to `https://data-api.binance.vision/api/v3`) |
+| `COINGECKO_BASE` | root `.env` | CoinGecko API base URL (defaults to `https://api.coingecko.com/api/v3`) |
 
 The root `.env` is loaded by the server. The `client/.env` is loaded by Vite. They are separate files.
 
@@ -91,3 +95,4 @@ The root `.env` is loaded by the server. The `client/.env` is loaded by Vite. Th
 - User objects are always passed through `sanitizeUser()` before sending to the client
 - Preference defaults and validation live in `server/utils/preferences.js`
 - Hooks follow naming: `use*Query` for reads, `use*Mutation` for writes
+- Controller private functions used in tests are exported under `__private__` (e.g. `module.exports = { getMarkets, __private__: { parseLimit, normalizeMarketRow } }`)
